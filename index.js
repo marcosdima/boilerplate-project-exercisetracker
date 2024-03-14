@@ -27,19 +27,8 @@ const userSchema = mongoose.Schema({
   username: String
 });
 
-const logSchema = mongoose.Schema({
-  username: String,
-  count: Number,
-  log: [{
-    description: String,
-    duration: Number,
-    date: String
-  }]
-});
-
 const Excercise = mongoose.model('Excersice', exerciseSchema);
 const User = mongoose.model('User', userSchema);
-const Log = mongoose.model('Log', logSchema);
 
 app.post("/api/users", (req, res) => {
   const username = req.body.username;
@@ -105,6 +94,38 @@ app.get("/api/users", async (req, res) => {
       res.status(500).json({ "error": "An error occurred while getting users." });
   });
   res.json(data);
+});
+
+app.get("/api/users/:_id/logs", async (req, res) => {
+  const id = req.params._id;
+
+  const { username } = await User.findOne({ _id: id })
+    .catch(err => {
+      console.error(err);
+      res.status(500).json({ "error": "An error occurred while getting user." });
+  });;
+
+  const exs = await Excercise.find({ username: username })
+    .catch(err => {
+      console.error(err);
+      res.status(500).json({ "error": "An error occurred while getting user." });
+  });
+
+  const log = exs.map(
+    element => { 
+      return {
+        description: element.description,
+        duration: element.duration,
+        date: element.date
+      }
+  });
+  
+  res.json({
+    username: username,
+    count: log.length,
+    _id: id,
+    log: log
+  });
 });
 
 const listener = app.listen(process.env.PORT || 3000, () => {
