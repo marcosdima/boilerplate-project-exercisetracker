@@ -46,7 +46,7 @@ app.post("/api/users", (req, res) => {
 
   if (!username) return res.json({ "err": "Invalid name..."});
 
-  let newUser = new User({ name: username });
+  let newUser = new User({ username: username });
 
   newUser.save().then(data => {
       res.json({
@@ -57,6 +57,17 @@ app.post("/api/users", (req, res) => {
       console.error(err);
       res.status(500).json({ "error": "An error occurred while saving the user." });
     });
+});
+
+app.get("/api/users", async (req, res) => {
+  const data = await User.find({}, 'username')
+    .then((response) => response)
+    .catch(err => {
+      console.error(err);
+      res.status(500).json({ "error": "An error occurred while getting users." });
+    });
+
+  res.json(data);
 });
 
 const listener = app.listen(process.env.PORT || 3000, () => {
