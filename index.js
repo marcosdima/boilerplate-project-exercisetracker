@@ -20,7 +20,7 @@ const exerciseSchema = mongoose.Schema({
   username: String,
   description: String,
   duration: Number,
-  date: Date
+  date: String
 });
 
 const userSchema = mongoose.Schema({
@@ -33,7 +33,7 @@ const logSchema = mongoose.Schema({
   log: [{
     description: String,
     duration: Number,
-    date: Date
+    date: String
   }]
 });
 
@@ -56,17 +56,54 @@ app.post("/api/users", (req, res) => {
     }).catch(err => {
       console.error(err);
       res.status(500).json({ "error": "An error occurred while saving the user." });
-    });
+  });
+});
+
+app.post("/api/users/:_id/exercises", async (req, res) => {
+  const id = req.params._id;
+
+  const { username } = await User.findOne({ _id: id })
+    .catch(err => {
+      console.error(err);
+      res.status(500).json({ "error": "An error occurred while getting user." });
+  });;
+
+  let date;
+  if (!req.body.date) date = new Date();
+  else date = new Date(req.body.date);
+
+  const options = {
+    weekday: 'short',
+    month: 'short',
+    day: '2-digit',
+    year: 'numeric'
+  };
+  date = date.toLocaleDateString('en-US', options).replace(/,/g, '');  
+  
+
+  const exData = {
+    username: username,
+    description: req.body.description,
+    duration: Number(req.body.duration),
+    date: date
+  };
+  const ex = new Excercise(exData);
+
+  ex.save().then(data => {
+      exData['_id'] = id;
+      res.json(exData);
+    }).catch(err => {
+      console.error(err);
+      res.status(500).json({ "error": "An error occurred while saving the user." });
+  });
 });
 
 app.get("/api/users", async (req, res) => {
   const data = await User.find({}, 'username')
-    .then((response) => response)
     .catch(err => {
       console.error(err);
       res.status(500).json({ "error": "An error occurred while getting users." });
-    });
-
+  });
   res.json(data);
 });
 
