@@ -98,6 +98,9 @@ app.get("/api/users", async (req, res) => {
 
 app.get("/api/users/:_id/logs", async (req, res) => {
   const id = req.params._id;
+  const from = req.query.from;
+  const to = req.query.to;
+  const limit = req.query.limit;
 
   const { username } = await User.findOne({ _id: id })
     .catch(err => {
@@ -111,7 +114,7 @@ app.get("/api/users/:_id/logs", async (req, res) => {
       res.status(500).json({ "error": "An error occurred while getting user." });
   });
 
-  const log = exs.map(
+  let log = exs.map(
     element => { 
       return {
         description: element.description,
@@ -120,6 +123,20 @@ app.get("/api/users/:_id/logs", async (req, res) => {
       }
   });
   
+  // Check if the date exists between from and to...
+  if (from && to) {
+    const fromDate = new Date(from);
+    const toDate = new Date(to);
+
+    log = log.filter(element => {
+      let dateAux = new Date(element.date);
+      if (fromDate <= dateAux && dateAux <= toDate) return element;
+    });
+  }
+
+  // If exists limit, slice log...
+  if (limit) log = log.slice(0, Number(limit))
+
   res.json({
     username: username,
     count: log.length,
